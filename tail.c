@@ -59,7 +59,19 @@ static int tail(const char *path, int follow, int unit, intmax_t count)
 	}
 
 	while (count < 0) {
-		/* work from the end */
+		count = (-count) + 1;
+		if (unit == BYTES) {
+			char buf[count];
+			intmax_t pos = 0;
+			while ((c = getc(f)) != EOF) {
+				buf[pos++] = c;
+				if (pos >= count) {
+					pos = 0;
+				}
+			}
+			fwrite(buf + pos, 1, count - pos, stdout);
+			fwrite(buf, 1, pos, stdout);
+		}
 	}
 
 	while (follow) {

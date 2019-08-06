@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,18 +60,36 @@ static int tail(const char *path, int follow, int unit, intmax_t count)
 	}
 
 	while (count < 0) {
-		count = (-count) + 1;
+		count = -count;
 		if (unit == BYTES) {
+			count++;
 			char buf[count];
 			intmax_t pos = 0;
 			while ((c = getc(f)) != EOF) {
 				buf[pos++] = c;
-				if (pos >= count) {
+				if (pos == count) {
 					pos = 0;
 				}
 			}
 			fwrite(buf + pos, 1, count - pos, stdout);
 			fwrite(buf, 1, pos, stdout);
+			break;
+		}
+
+		intmax_t line = 0;
+		char buf[count][LINE_MAX];
+		while (fgets(buf[line], sizeof(buf[line]), f) != NULL) {
+			line++;
+			if (line == count) {
+				line = 0;
+			}
+		}
+
+		for (intmax_t i = line; i < count; i++) {
+			fputs(buf[i], stdout);
+		}
+		for (intmax_t i = 0; i < line; i++) {
+			fputs(buf[i], stdout);
 		}
 	}
 

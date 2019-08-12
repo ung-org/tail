@@ -123,27 +123,19 @@ void fixobsolete(int argc, char *argv[])
 			continue;
 		}
 
-		if (argv[i][0] == '+') {
-			if (!isdigit(argv[i][1])) {
-				argv[i][0] = '-';
-				continue;
-			}
-
-			fprintf(stderr, "tail: +# is obsolete; use -n or -l\n");
-			/* TODO: convert */
-		}
-
-		if (argv[i][0] == '-' && isdigit(argv[i][1])) {
-			fprintf(stderr, "tail: -# is obsolete; use -n or -l\n");
+		if ((argv[i][0] == '-' || argv[i][0] == '+') && isdigit(argv[i][1])) {
+			fprintf(stderr, "tail: %c# is obsolete; use -n or -c\n", argv[i][0]);
 			char *opt = malloc(strlen(argv[i]) + 3);
 			if (opt == NULL) {
 				perror("tail");
 				exit(1);
 			}
+			sprintf(opt, "-n %s", argv[i]);
 			/* TODO */
 			/* no suffix or 'l' => -l */
 			/* 'c' => -c */
 			/* 'b' => -c 512 * n */
+			argv[i] = opt;
 		}
 	}
 }
@@ -158,6 +150,7 @@ int main(int argc, char *argv[])
 
 	int c;
 	char *end;
+	fixobsolete(argc, argv);
 	while ((c = getopt(argc, argv, "c:fn:")) != -1) {
 		switch (c) {
 		case 'c':
